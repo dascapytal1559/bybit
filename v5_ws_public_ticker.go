@@ -79,6 +79,18 @@ type V5WebsocketPublicTickerData struct {
 	Spot          *V5WebsocketPublicTickerSpotResult
 }
 
+func (r *V5WebsocketPublicTickerData) UnmarshalJSON(data []byte) error {
+	switch r.category {
+	case CategoryV5Linear, CategoryV5Inverse:
+		return json.Unmarshal(data, &r.LinearInverse)
+	case CategoryV5Option:
+		return json.Unmarshal(data, &r.Option)
+	case CategoryV5Spot:
+		return json.Unmarshal(data, &r.Spot)
+	}
+	return errors.New("unsupported format")
+}
+
 // V5WebsocketPublicTickerLinearInverseResult :
 type V5WebsocketPublicTickerLinearInverseResult struct {
 	Symbol                 SymbolV5      `json:"symbol"`

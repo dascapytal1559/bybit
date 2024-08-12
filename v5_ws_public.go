@@ -35,6 +35,11 @@ type V5WebsocketPublicServiceI interface {
 		func(V5WebsocketPublicTickerResponse) error,
 	) (func() error, error)
 
+	SubscribeBookticker(
+		V5WebsocketPublicBooktickerParamKey,
+		func(V5WebsocketPublicBooktickerResponse) error,
+	) (func() error, error)
+
 	SubscribeTrade(
 		V5WebsocketPublicTradeParamKey,
 		func(V5WebsocketPublicTradeResponse) error,
@@ -57,6 +62,7 @@ type V5WebsocketPublicService struct {
 	paramOrderBookMap   map[V5WebsocketPublicOrderBookParamKey]func(V5WebsocketPublicOrderBookResponse) error
 	paramKlineMap       map[V5WebsocketPublicKlineParamKey]func(V5WebsocketPublicKlineResponse) error
 	paramTickerMap      map[V5WebsocketPublicTickerParamKey]func(V5WebsocketPublicTickerResponse) error
+	paramBooktickerMap  map[V5WebsocketPublicBooktickerParamKey]func(V5WebsocketPublicBooktickerResponse) error
 	paramTradeMap       map[V5WebsocketPublicTradeParamKey]func(V5WebsocketPublicTradeResponse) error
 	paramLiquidationMap map[V5WebsocketPublicLiquidationParamKey]func(V5WebsocketPublicLiquidationResponse) error
 }
@@ -84,6 +90,9 @@ const (
 	// V5WebsocketPublicTopicTicker :
 	V5WebsocketPublicTopicTicker = V5WebsocketPublicTopic("tickers")
 
+	// V5WebsocketPublicTopicBookticker :
+	V5WebsocketPublicTopicBookticker = V5WebsocketPublicTopic("bookticker")
+
 	// V5WebsocketPublicTopicTrade :
 	V5WebsocketPublicTopicTrade = V5WebsocketPublicTopic("publicTrade")
 
@@ -109,6 +118,8 @@ func (s *V5WebsocketPublicService) judgeTopic(respBody []byte) (V5WebsocketPubli
 			return V5WebsocketPublicTopicKline, nil
 		case strings.Contains(topic, V5WebsocketPublicTopicTicker.String()):
 			return V5WebsocketPublicTopicTicker, nil
+		case strings.Contains(topic, V5WebsocketPublicTopicBookticker.String()):
+			return V5WebsocketPublicTopicBookticker, nil
 		case strings.Contains(topic, V5WebsocketPublicTopicTrade.String()):
 			return V5WebsocketPublicTopicTrade, nil
 		case strings.Contains(topic, V5WebsocketPublicTopicLiquidation.String()):
@@ -116,19 +127,6 @@ func (s *V5WebsocketPublicService) judgeTopic(respBody []byte) (V5WebsocketPubli
 		}
 	}
 	return "", nil
-}
-
-// UnmarshalJSON :
-func (r *V5WebsocketPublicTickerData) UnmarshalJSON(data []byte) error {
-	switch r.category {
-	case CategoryV5Linear, CategoryV5Inverse:
-		return json.Unmarshal(data, &r.LinearInverse)
-	case CategoryV5Option:
-		return json.Unmarshal(data, &r.Option)
-	case CategoryV5Spot:
-		return json.Unmarshal(data, &r.Spot)
-	}
-	return errors.New("unsupported format")
 }
 
 // parseResponse :
@@ -239,6 +237,20 @@ func (s *V5WebsocketPublicService) Run() error {
 		}
 
 		f, err := s.retrieveTickerFunc(resp.Key())
+		if err != nil {
+			return err
+		}
+
+		if err := f(resp); err != nil {
+			return err
+		}
+	case V5WebsocketPublicTopicBookticker:
+		var resp V5WebsocketPublicBooktickerResponse
+		if err := s.parseResponse(message, &resp); err != nil {
+			return err
+		}
+
+		f, err := s.retrieveBooktickerFunc(resp.Key())
 		if err != nil {
 			return err
 		}
