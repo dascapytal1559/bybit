@@ -92,11 +92,11 @@ type TimeInForce string
 
 const (
 	// TimeInForceGoodTillCancel :
-	TimeInForceGoodTillCancel = TimeInForce("GoodTillCancel")
+	TimeInForceGoodTillCancel = TimeInForce("GTC")
 	// TimeInForceImmediateOrCancel :
-	TimeInForceImmediateOrCancel = TimeInForce("ImmediateOrCancel")
+	TimeInForceImmediateOrCancel = TimeInForce("IOC")
 	// TimeInForceFillOrKill :
-	TimeInForceFillOrKill = TimeInForce("FillOrKill")
+	TimeInForceFillOrKill = TimeInForce("FOK")
 	// TimeInForcePostOnly :
 	TimeInForcePostOnly = TimeInForce("PostOnly")
 )
